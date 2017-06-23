@@ -111,9 +111,9 @@ function init() {
     document.addEventListener( 'mousedown', OnMouseDown, false);
     document.addEventListener( 'mouseup', OnMouseUp, false);
     document.addEventListener( 'mousemove', OnMouseMove, false);
-    document.addEventListener( 'touchstart', OnTouchStart, false);
-    document.addEventListener( 'touchend', OnTouchEnd, false);
-    document.addEventListener( 'touchmove', OnTouchMove, false);
+    document.addEventListener( 'touchstart', OnTouchStart, {passive: false});
+    document.addEventListener( 'touchend', OnTouchEnd, {passive: false});
+    document.addEventListener( 'touchmove', OnTouchMove, {passive: false});
 }
 
 function HandleStart( x, y ) {
