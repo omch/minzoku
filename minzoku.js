@@ -31,7 +31,7 @@ Handle.prototype = {
 
         return this._getAngle( n.x, n.y ) - this._getAngle( l.x, l.y );
         */
-        var vel = 4 * n.clone().sub(l).length();
+        var vel = 2 * n.clone().sub(l).length();
         if ( n.x * l.y - n.y * l.x > 0 ) {
             return -vel;
         } else {
@@ -108,21 +108,49 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
 
     // mouse events
-    renderer.domElement.addEventListener( 'mousedown', function(e) {
-        if ( e.button != 0 ) return;
-        handle = new Handle( e.pageX, e.pageY );
-    }, false );
-    renderer.domElement.addEventListener( 'mouseup', function(e) {
-        if ( e.button != 0 ) return;
-        omega = handle.getOmega();
-        handle = null;
-    }, false );
-    renderer.domElement.addEventListener( 'mousemove', function(e) {
-        if ( handle ) {
-            handle.update( e.pageX, e.pageY );
-            minzoku.rotation.y = handle.getPhase();
-        }
-    }, false );
+    renderer.domElement.addEventListener( 'mousedown', OnMouseDown, false);
+    renderer.domElement.addEventListener( 'mouseup', OnMouseUp, false);
+    renderer.domElement.addEventListener( 'mousemove', OnMouseMove, false);
+    renderer.domElement.addEventListener( 'touchstart', OnTouchStart, false);
+    renderer.domElement.addEventListener( 'touchend', OnTouchEnd, false);
+    renderer.domElement.addEventListener( 'touchmove', OnTouchMove, false);
+}
+
+function HandleStart( x, y ) {
+    handle = new Handle( x, y );
+}
+function HandleEnd() {
+    omega = handle.getOmega();
+    handle = null;
+}
+function HandleUpdate( x, y ) {
+    handle.update( x, y );
+    minzoku.rotation.y = handle.getPhase();
+}
+function OnMouseDown(e) {
+    if ( e.button != 0 ) return;
+    HandleStart( e.pageX, e.pageY );
+}
+function OnMouseUp(e) {
+    if ( e.button != 0 ) return;
+    HandleEnd();
+}
+function OnMouseMove(e) {
+    if ( !handle ) return;
+    HandleUpdate( e.pageX, e.pageY );
+}
+function OnTouchStart(e) {
+    if ( e.touches.length != 1 ) return;
+    HandleStart( e.touches[0].pageX, e.touches[0].pageY );
+}
+function OnTouchEnd(e) {
+    if ( e.touches.length != 0 ) return;
+    HandleEnd();
+}
+function OnTouchMove(e) {
+    e.preventDefault();
+    if ( !handle || e.touches.length != 1) return;
+    HandleUpdate( e.touches[0].pageX, e.touches[0].pageY );
 }
 
 function onWindowResize() {
