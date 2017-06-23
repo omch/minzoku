@@ -1,29 +1,92 @@
 var camera, scene, renderer, controls;
 var minzoku;
-var omega=0.1, grab=false, lastX, lastY, newX, newY, originX, originY;
-init();
-update();
+var handle, omega = 0;
+
+var Handle = function( pageX, pageY ) {
+    this.originX = this.lastX = this.newX = pageX;
+    this.originY = this.lastY = this.newY = pageY;
+    this.initialPhase = 0;
+    this.initialPhase = minzoku.rotation.y - this.getPhase();
+}
+
+Handle.prototype = {
+    update: function( pageX, pageY ) {
+        this.lastX = this.newX;
+        this.lastY = this.newY;
+        this.newX = pageX;
+        this.newY = pageY;
+    },
+
+    getPhase: function() {
+        var p = this._normalize( this.newX, this.newY );
+        return this._getAngle( p.x, p.y ) + this.initialPhase;
+    },
+
+    getOmega: function() {
+        var n = this._normalize( this.newX, this.newY ),
+            l = this._normalize( this.lastX, this.lastY );
+        /*
+         * マウスでうまく角速度が最大になるタイミングで離すのは難しいので、
+         * 速度に比例させてごまかす
+
+        return this._getAngle( n.x, n.y ) - this._getAngle( l.x, l.y );
+        */
+        var vel = 4 * n.clone().sub(l).length();
+        if ( n.x * l.y - n.y * l.x > 0 ) {
+            return -vel;
+        } else {
+            return vel;
+        }
+    },
+
+    // pageX, pageY を [-1, 1]^2 に正規化
+    _normalize: function( pageX, pageY ) {
+        var size = renderer.getSize();
+        return new THREE.Vector2(
+            2 * pageX / size.width - 1,
+            -2 * pageY / size.height + 1
+        );
+    },
+
+    _getAngle: function( x, y ) {
+        var v = this._inverseProjection( x, y );
+        return Math.atan2( v.y, v.x );
+    },
+
+    // 正規化座標からxy平面への逆射影。
+    _inverseProjection: function( x, y ) {
+        var vp = camera.projectionMatrix.clone().multiply( camera.matrixWorldInverse.clone() );
+        var v = new THREE.Vector3( x, y, 0.8 );
+        var w = new THREE.Vector3( x, y, 0 );
+        v.applyMatrix4( (new THREE.Matrix4()).getInverse( vp.clone() ) );
+        w = camera.position;
+        var r = -w.z / (v.z - w.z);
+        return {
+            x: w.x + (v.x - w.x) * r,
+            y: w.y + (v.y - w.y) * r,
+            z: w.z + (v.z - w.z) * r
+        };
+    }
+}
 
 function init() {
-    grab=false;
-    lastX = lastY = newX = newY = originX = originY =0;
-
     scene = new THREE.Scene();
 
     // camera
     camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
-    camera.position.set( 0, 0, 4 );
+    camera.position.set( 1, 1.2, 3.6 );
     camera.lookAt( 0, 0, 0 );
     controls = new THREE.OrbitControls( camera );
 
     // minzoku
     var modelLoader = new THREE.JSONLoader();
     modelLoader.load( 'model.json', ( geometry, materials ) => {
+        materials[0].shading=THREE.FlatShading;
         minzoku = new THREE.Mesh( geometry, materials );
         minzoku.position.set( 0, 0, 0 );
-        var s = 0.3;
+        const s = 0.3;
         minzoku.scale.set( s, s, s );
-        minzoku.rotation.x = 80;
+        minzoku.rotation.x = Math.PI / 2;
         scene.add( minzoku );
     } );
 
@@ -45,35 +108,36 @@ function init() {
     window.addEventListener( 'resize', onWindowResize, false );
 
     // mouse events
-    renderer.domElement.addEventListener( 'mousedown', (e) => {
+    renderer.domElement.addEventListener( 'mousedown', function(e) {
         if ( e.button != 0 ) return;
-        grab = true;
-        originX = lastX = newX = e.pageX;
-        originY = lastY = nreY = e.pageY;
+        handle = new Handle( e.pageX, e.pageY );
     }, false );
-    renderer.domElement.addEventListener( 'mouseup', (e) => {
+    renderer.domElement.addEventListener( 'mouseup', function(e) {
         if ( e.button != 0 ) return;
-        grab = false;
-        vel = Math.sqrt((lastX-newX)*(lastX-newX)+(lastY-newY)*(lastY-newY)) / 100;
-        omega = vel;
+        omega = handle.getOmega();
+        handle = null;
     }, false );
-    renderer.domElement.addEventListener( 'mousemove', (e )=> {
-        lastX = newX;
-        lastY = newY;
-        newX = e.pageX;
-        newY = e.pageY;
-        if ( grab ) minzoku.rotation.y = ( originX - newX ) / 20;
+    renderer.domElement.addEventListener( 'mousemove', function(e) {
+        if ( handle ) {
+            handle.update( e.pageX, e.pageY );
+            minzoku.rotation.y = handle.getPhase();
+        }
     }, false );
-
 }
+
 function onWindowResize() {
     renderer.setSize( window.innerWidth, window.innerHeight );
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
 }
+
 function update() {
     requestAnimationFrame( update );
     controls.update();
-    if ( !grab ) minzoku.rotation.y += omega;
+    omega *= 0.999;
+    if ( minzoku && !handle ) minzoku.rotation.y += omega;
     renderer.render( scene, camera );
 }
+
+init();
+update();
