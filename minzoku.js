@@ -102,18 +102,18 @@ function init() {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setClearColor( 0x14aa86, 1 );
-    document.body.appendChild( renderer.domElement );
+    document.getElementById("container").appendChild( renderer.domElement );
 
     // events
     window.addEventListener( 'resize', onWindowResize, false );
 
     // mouse events
-    renderer.domElement.addEventListener( 'mousedown', OnMouseDown, false);
-    renderer.domElement.addEventListener( 'mouseup', OnMouseUp, false);
-    renderer.domElement.addEventListener( 'mousemove', OnMouseMove, false);
-    renderer.domElement.addEventListener( 'touchstart', OnTouchStart, false);
-    renderer.domElement.addEventListener( 'touchend', OnTouchEnd, false);
-    renderer.domElement.addEventListener( 'touchmove', OnTouchMove, false);
+    document.addEventListener( 'mousedown', OnMouseDown, false);
+    document.addEventListener( 'mouseup', OnMouseUp, false);
+    document.addEventListener( 'mousemove', OnMouseMove, false);
+    document.addEventListener( 'touchstart', OnTouchStart, false);
+    document.addEventListener( 'touchend', OnTouchEnd, false);
+    document.addEventListener( 'touchmove', OnTouchMove, false);
 }
 
 function HandleStart( x, y ) {
