@@ -120,10 +120,12 @@ function HandleStart( x, y ) {
     handle = new Handle( x, y );
 }
 function HandleEnd() {
+    if ( !handle ) return;
     omega = handle.getOmega();
     handle = null;
 }
 function HandleUpdate( x, y ) {
+    if ( !handle ) return;
     handle.update( x, y );
     minzoku.rotation.y = handle.getPhase();
 }
@@ -136,7 +138,6 @@ function OnMouseUp(e) {
     HandleEnd();
 }
 function OnMouseMove(e) {
-    if ( !handle ) return;
     HandleUpdate( e.pageX, e.pageY );
 }
 function OnTouchStart(e) {
@@ -149,7 +150,7 @@ function OnTouchEnd(e) {
 }
 function OnTouchMove(e) {
     e.preventDefault();
-    if ( !handle || e.touches.length != 1) return;
+    if ( e.touches.length != 1) return;
     HandleUpdate( e.touches[0].pageX, e.touches[0].pageY );
 }
 
