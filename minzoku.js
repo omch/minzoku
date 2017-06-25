@@ -172,7 +172,7 @@ function setSmoothness(val) {
     else if ( val == 100 ) { smoothness = 1; }
     else {
          // 正実数全体を動く 1 - (1/x) を適当なスケールで近似 (パラメータと回転時間が比例する)
-        smoothness = 1 - 0.8 /  (val * 7 - 6);
+        smoothness = 1 - 0.4 /  (val * 7 - 6);
     }
 }
 
