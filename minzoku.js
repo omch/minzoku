@@ -1,6 +1,8 @@
 var camera, scene, renderer, controls;
 var minzoku;
-var handle, omega = 0;
+var handle, omega = 0, boost, smoothness;
+setBoost(50);
+setSmoothness(50);
 
 var Handle = function( pageX, pageY ) {
     this.originX = this.lastX = this.newX = pageX;
@@ -31,7 +33,7 @@ Handle.prototype = {
 
         return this._getAngle( n.x, n.y ) - this._getAngle( l.x, l.y );
         */
-        var vel = 2 * n.clone().sub(l).length();
+        var vel = boost * n.clone().sub(l).length();
         if ( n.x * l.y - n.y * l.x > 0 ) {
             return -vel;
         } else {
@@ -70,13 +72,14 @@ Handle.prototype = {
 }
 
 function init() {
+    var container = document.getElementById("container");
     scene = new THREE.Scene();
 
     // camera
     camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 1, 2000 );
     camera.position.set( 1, 1.2, 3.6 );
     camera.lookAt( 0, 0, 0 );
-    controls = new THREE.OrbitControls( camera );
+    controls = new THREE.OrbitControls( camera, container );
 
     // minzoku
     var modelLoader = new THREE.JSONLoader();
@@ -102,18 +105,18 @@ function init() {
     renderer.setPixelRatio( window.devicePixelRatio );
     renderer.setSize( window.innerWidth, window.innerHeight );
     renderer.setClearColor( 0x14aa86, 1 );
-    document.getElementById("container").appendChild( renderer.domElement );
+    container.appendChild( renderer.domElement );
 
     // events
     window.addEventListener( 'resize', onWindowResize, false );
 
     // mouse events
-    document.addEventListener( 'mousedown', OnMouseDown, false);
-    document.addEventListener( 'mouseup', OnMouseUp, false);
-    document.addEventListener( 'mousemove', OnMouseMove, false);
-    document.addEventListener( 'touchstart', OnTouchStart, {passive: false});
-    document.addEventListener( 'touchend', OnTouchEnd, {passive: false});
-    document.addEventListener( 'touchmove', OnTouchMove, {passive: false});
+    renderer.domElement.addEventListener( 'mousedown', OnMouseDown, false);
+    renderer.domElement.addEventListener( 'mouseup', OnMouseUp, false);
+    renderer.domElement.addEventListener( 'mousemove', OnMouseMove, false);
+    renderer.domElement.addEventListener( 'touchstart', OnTouchStart, {passive: false});
+    renderer.domElement.addEventListener( 'touchend', OnTouchEnd, {passive: false});
+    renderer.domElement.addEventListener( 'touchmove', OnTouchMove, {passive: false});
 }
 
 function HandleStart( x, y ) {
@@ -160,13 +163,37 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
 }
 
+function setBoost(val) {
+    boost =  0.5 + val  * 0.03;
+}
+
+function setSmoothness(val) {
+    if ( val == 0 ) { smoothness = 0; }
+    else if ( val == 100 ) { smoothness = 1; }
+    else {
+         // 正実数全体を動く 1 - (1/x) を適当なスケールで近似 (パラメータと回転時間が比例する)
+        smoothness = 1 - 0.8 /  (val * 7 - 6);
+    }
+}
+
+function toggleConsole() {
+    var cl = document.getElementById( "console" ).classList;
+    var mark = "console-open";
+    if ( cl.contains( mark ) ) {
+        cl.remove( mark );
+    } else {
+        cl.add( mark );
+    }
+}
+
 function update() {
     requestAnimationFrame( update );
     controls.update();
-    omega *= 0.999;
+    omega *= smoothness;
     if ( minzoku && !handle ) minzoku.rotation.y += omega;
     renderer.render( scene, camera );
 }
+
 
 init();
 update();

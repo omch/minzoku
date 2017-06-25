@@ -10,12 +10,19 @@
     </head>
     <body>
         <div id="container"></div>
-        <div id="overlay">
-            <footer>
-                spin (left click / single tap), zoom (middle / double), rotate (right, triple)<br/>
-                <a href="https://github.com/omch/minzoku/">source</a>
-            </footer>
+        <div id="console" class="overlay">
+            <div id="console-toggle" onclick="toggleConsole()"><span></span><span></span><span></span></div>
+            <div id="console-wrapper">
+                <div id="console-board">
+                    <p><label>感度<br/> <input type="range" oninput="setBoost(this.value)"></label></p>
+                    <p><label>なめらかさ<br/> <input type="range" oninput="setSmoothness(this.value)"></label></p>
+                </div>
+            </div>
         </div>
+        <footer class="overlay">
+            spin (left click / single tap), zoom (middle / double), rotate (right, triple)<br/>
+            <a id="source-link" href="https://github.com/omch/minzoku/">source</a>
+        </footer>
         <script type = "text/javascript" src = "minzoku.js"></script>
     </body>
 </html>
