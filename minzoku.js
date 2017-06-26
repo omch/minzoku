@@ -5,34 +5,27 @@ setBoost(50);
 setSmoothness(50);
 
 var Handle = function( pageX, pageY ) {
-    this.originX = this.lastX = this.newX = pageX;
-    this.originY = this.lastY = this.newY = pageY;
+    this.originP = new THREE.Vector2( pageX, pageY );
+    this.newP = this.originP.clone();
+    this.lastP = this.originP.clone();
     this.initialPhase = 0;
     this.initialPhase = minzoku.rotation.y - this.getPhase();
 }
 
 Handle.prototype = {
     update: function( pageX, pageY ) {
-        this.lastX = this.newX;
-        this.lastY = this.newY;
-        this.newX = pageX;
-        this.newY = pageY;
+        this.lastP.copy(this.newP);
+        this.newP.set( pageX, pageY );
     },
 
     getPhase: function() {
-        var p = this._normalize( this.newX, this.newY );
+        var p = this._normalize( this.newP );
         return this._getAngle( p.x, p.y ) + this.initialPhase;
     },
 
     getOmega: function() {
-        var n = this._normalize( this.newX, this.newY ),
-            l = this._normalize( this.lastX, this.lastY );
-        /*
-         * マウスでうまく角速度が最大になるタイミングで離すのは難しいので、
-         * 速度に比例させてごまかす
-
-        return this._getAngle( n.x, n.y ) - this._getAngle( l.x, l.y );
-        */
+        var n = this._normalize( this.newP ),
+            l = this._normalize( this.lastP );
         var vel = boost * n.clone().sub(l).length();
         if ( n.x * l.y - n.y * l.x > 0 ) {
             return -vel;
@@ -42,11 +35,11 @@ Handle.prototype = {
     },
 
     // pageX, pageY を [-1, 1]^2 に正規化
-    _normalize: function( pageX, pageY ) {
+    _normalize: function( pageP ) {
         var size = renderer.getSize();
         return new THREE.Vector2(
-            2 * pageX / size.width - 1,
-            -2 * pageY / size.height + 1
+            2 * pageP.x / size.width - 1,
+            -2 * pageP.y / size.height + 1
         );
     },
 
@@ -63,11 +56,7 @@ Handle.prototype = {
         v.applyMatrix4( (new THREE.Matrix4()).getInverse( vp.clone() ) );
         w = camera.position;
         var r = -w.z / (v.z - w.z);
-        return {
-            x: w.x + (v.x - w.x) * r,
-            y: w.y + (v.y - w.y) * r,
-            z: w.z + (v.z - w.z) * r
-        };
+        return w.clone().add( v.sub( w ).multiplyScalar( r ) );
     }
 }
 
