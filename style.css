@@ -19,6 +19,10 @@ h1 {
     font-weight: bolder;
 }
 
+.nowrap {
+    white-space: nowrap;
+}
+
 #console {
     top: 30px;
     right: 0;
