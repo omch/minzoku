@@ -6,33 +6,40 @@ setSmoothness(50);
 
 var Handle = function( pageX, pageY ) {
     this.originP = new THREE.Vector2( pageX, pageY );
-    this.newP = this.originP.clone();
-    this.lastP = this.originP.clone();
+    this.points = new Array(10);
+    for (var i=0; i<10; i++) {
+        this.points[i] = this.originP.clone();
+    }
+    this.i = 0;
     this.initialPhase = 0;
     this.initialPhase = minzoku.rotation.y - this.getPhase();
 }
 
 Handle.prototype = {
     update: function( pageX, pageY ) {
-        this.lastP.copy(this.newP);
-        this.newP.set( pageX, pageY );
+        this.i++;
+        this._newP().set( pageX, pageY );
     },
 
     getPhase: function() {
-        var p = this._normalize( this.newP );
+        var p = this._normalize( this._newP() );
         return this._getAngle( p.x, p.y ) + this.initialPhase;
     },
 
     getOmega: function() {
-        var n = this._normalize( this.newP ),
-            l = this._normalize( this.lastP );
-        var vel = boost * n.clone().sub(l).length();
+        var n = this._normalize( this._newP() ),
+            l = this._normalize( this._llastP() );
+        var vel = boost * n.clone().sub(l).length() / 10;
         if ( n.x * l.y - n.y * l.x > 0 ) {
             return -vel;
         } else {
             return vel;
         }
     },
+
+    _newP: function() { return this.points[ this.i % 10 ]; },
+    _lastP: function() { return this.points[ (this.i + 9) % 10 ]; },
+    _llastP: function() { return this.points[ (this.i + 1) % 10 ]; },
 
     // pageX, pageY を [-1, 1]^2 に正規化
     _normalize: function( pageP ) {
